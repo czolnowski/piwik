@@ -15,7 +15,8 @@ class StylesheetUIAssetFetcher extends UIAssetFetcher
 {
     protected function getPriorityOrder()
     {
-        $themeName = $this->getTheme()->getThemeName();
+        $theme = $this->getTheme();
+        $themeName = $theme->getThemeName();
         $order = array(
             'libs/',
             'plugins/CoreHome/stylesheets/color_manager.css', // must be before other Piwik stylesheets
@@ -25,7 +26,8 @@ class StylesheetUIAssetFetcher extends UIAssetFetcher
         if ($themeName === 'Morpheus') {
             $order[] = 'plugins\/((?!Morpheus).)*\/';
         } else {
-            $order[] = sprintf('plugins/%s/stylesheets/base.less', $themeName);
+            // Load the theme's base stylesheet first
+            $order[] = $theme->getStylesheet();
             $order[] = sprintf('plugins\/((?!(Morpheus)|(%s)).)*\/', $themeName);
         }
 
