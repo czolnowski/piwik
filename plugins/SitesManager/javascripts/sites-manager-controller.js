@@ -17,9 +17,19 @@ angular.module('piwikApp').controller('SitesManagerController', function ($scope
 
     var initModel = function() {
 
+        $scope  .form={filter : 'test'};
         $scope.sites = [];
         $scope.hasSuperUserAccess = piwik.hasSuperUserAccess;
         $scope.redirectParams = {showaddsite: false};
+        $scope.pagination = {
+            limit: 10,
+            pages: [],
+            page: 1,
+            max: 1
+        };
+
+        $scope.$watch("pagination.limit", updatePagesAmount);
+        $scope.$watch("pagination.page", updatePagesAmount);
 
         initSelectLists();
         initUtcTime();
@@ -221,6 +231,7 @@ angular.module('piwikApp').controller('SitesManagerController', function ($scope
                 $scope.sites.push(site);
             });
 
+            updatePagesAmount();
             hideLoading();
         });
     };
@@ -238,6 +249,17 @@ angular.module('piwikApp').controller('SitesManagerController', function ($scope
 
     var hideLoading = function() {
         $scope.loading = false;
+    };
+
+    var updatePagesAmount = function () {
+        $scope.pagination.pages = [];
+        $scope.pagination.max = Math.ceil($scope.sites.length / $scope.pagination.limit);
+
+//        if ($scope.`)
+
+        for (var i = 0; i < $scope.pagination.max; ++i) {
+            $scope.pagination.pages.push(i + 1);
+        }
     };
 
     init();

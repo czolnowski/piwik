@@ -2,7 +2,11 @@
 
     <div ng-repeat="site in sites" ng-include="'plugins/SitesManager/templates/dialogs/dialogs.html'"></div>
 
+    <div ng-include="'plugins/SitesManager/templates/sites-list/pagination.html'"></div>
+
     <div ng-include="'plugins/SitesManager/templates/sites-list/add-site-link.html'"></div>
+
+    query: {{ form.filter | json }}
 
     <table class="entityTable dataTable">
         <thead>
@@ -28,7 +32,7 @@
             <tr
                     sites-manager-scroll
                     ng-controller="SitesManagerSiteController"
-                    ng-repeat="site in sites"
+                    ng-repeat="site in sites | filter: form.filter | limitTo: pagination.limit"
                     ng-include="'plugins/SitesManager/templates/sites-list/site-fields.html'">
             </tr>
         </tbody>
