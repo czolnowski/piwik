@@ -3605,6 +3605,7 @@ if (typeof Piwik !== 'object') {
              * Log the link or click with the server
              */
             function logLink(url, linkType, customData, callback, sourceElement) {
+                url = parseUrlWithLinkType(url, linkType);
 
                 var linkParams = linkType + '=' + encodeWrapper(purify(url));
 
@@ -3617,6 +3618,19 @@ if (typeof Piwik !== 'object') {
                 var request = getRequest(linkParams, customData, 'link');
 
                 sendRequest(request, (callback ? 0 : configTrackerPause), callback);
+            }
+
+            var downloadLinksReplacement = {};
+            function parseUrlWithLinkType(url, linkType)
+            {
+                switch (linkType) {
+                    case 'download':
+                        if (typeof downloadLinksReplacement[url] === 'string') {
+                            return downloadLinksReplacement[url];
+                        }
+                    default:
+                        return url;
+                }
             }
 
             /*
@@ -3985,6 +3999,11 @@ if (typeof Piwik !== 'object') {
                 internalIsNodeVisible: isVisible,
                 isNodeAuthorizedToTriggerInteraction: isNodeAuthorizedToTriggerInteraction,
                 replaceHrefIfInternalLink: replaceHrefIfInternalLink,
+                replaceDownloadLinks: function (from, to)
+                {
+                    console.log('replaceDownloadLinks', arguments)
+                    downloadLinksReplacement[from] = to;
+                },
                 getConfigDownloadExtensions: function () {
                     return configDownloadExtensions;
                 },
