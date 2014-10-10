@@ -414,7 +414,7 @@ if (typeof JSON2 !== 'object') {
     setCustomData, getCustomData,
     setCustomRequestProcessing,
     setCustomVariable, getCustomVariable, deleteCustomVariable, storeCustomVariablesInCookie,
-    setDownloadExtensions, addDownloadExtensions,
+    setDownloadExtensions, addDownloadExtensions, replaceDownloadLinks,
     setDomains, setIgnoreClasses, setRequestMethod, setRequestContentType,
     setReferrerUrl, setCustomUrl, setAPIUrl, setDocumentTitle,
     setDownloadClasses, setLinkClasses,
@@ -2288,7 +2288,10 @@ if (typeof Piwik !== 'object') {
                 domainHash,
 
                 // Visitor UUID
-                visitorUUID = uuid;
+                visitorUUID = uuid,
+
+                // Download patterns to replacement
+                downloadLinksReplacement = [];
 
             /*
              * Set cookie value
@@ -3620,13 +3623,42 @@ if (typeof Piwik !== 'object') {
                 sendRequest(request, (callback ? 0 : configTrackerPause), callback);
             }
 
-            var downloadLinksReplacement = {};
             function parseUrlWithLinkType(url, linkType)
             {
                 switch (linkType) {
                     case 'download':
-                        if (typeof downloadLinksReplacement[url] === 'string') {
-                            return downloadLinksReplacement[url];
+                        var pattern;
+                        for (var index in downloadLinksReplacement) {
+                            if (typeof downloadLinksReplacement[index].from === 'string'
+                                && typeof downloadLinksReplacement[index].to === 'string') {
+                                pattern = new RegExp(downloadLinksReplacement[index].from);
+                                if (pattern.test(url)) {
+                                    var result = pattern.exec(url),
+                                        to = downloadLinksReplacement[index].to;
+
+                                    if (result.length < 2) {
+                                        return to;
+                                    }
+
+                                    var partOfString;
+                                    do {
+                                        partOfString = /\$([0-9]+)/.exec(to);
+                                        if (partOfString !== null) {
+                                            to = [
+                                                to.substring(0, partOfString.index),
+                                                result[partOfString[1]],
+                                                to.substring(partOfString.index + partOfString[0].length)
+                                            ].join('');
+                                        }
+                                    } while(partOfString != null );
+
+                                    return [
+                                        url.substring(0, result.index),
+                                        to,
+                                        url.substring(result.index + result[0].length)
+                                    ].join('');
+                                }
+                            }
                         }
                     default:
                         return url;
@@ -3999,11 +4031,6 @@ if (typeof Piwik !== 'object') {
                 internalIsNodeVisible: isVisible,
                 isNodeAuthorizedToTriggerInteraction: isNodeAuthorizedToTriggerInteraction,
                 replaceHrefIfInternalLink: replaceHrefIfInternalLink,
-                replaceDownloadLinks: function (from, to)
-                {
-                    console.log('replaceDownloadLinks', arguments)
-                    downloadLinksReplacement[from] = to;
-                },
                 getConfigDownloadExtensions: function () {
                     return configDownloadExtensions;
                 },
@@ -4333,6 +4360,19 @@ if (typeof Piwik !== 'object') {
                  */
                 addDownloadExtensions: function (extensions) {
                     configDownloadExtensions += '|' + extensions;
+                },
+
+                /**
+                 * Define download links patterns to replace.
+                 * @param string from
+                 * @param string to
+                 */
+                replaceDownloadLinks: function (from, to)
+                {
+                    downloadLinksReplacement.push({
+                        from: from,
+                        to: to
+                    });
                 },
 
                 /**
